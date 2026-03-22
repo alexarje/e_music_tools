@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brass Tuner – e_music_tools</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .tuner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* ---- meter ---- */
+    .meter-container {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      height: 180px;
+    }
+    .meter-arc {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ---- note display ---- */
+    .note-name {
+      font-size: 5rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1;
+      min-height: 1em;
+      letter-spacing: -.02em;
+    }
+    .note-freq {
+      text-align: center;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-top: .2rem;
+    }
+    .cents-display {
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      min-height: 1.5em;
+    }
+    .cents-display.in-tune  { color: #4caf50; }
+    .cents-display.sharp    { color: var(--accent); }
+    .cents-display.flat     { color: #42a5f5; }
+    .cents-display.silent   { color: var(--muted); }
+
+    /* ---- needle SVG ---- */
+    #needle {
+      transform-origin: 50% 100%;
+      transition: transform .08s ease-out;
+    }
+
+    /* ---- frequency range info ---- */
+    .range-info {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .range-badge {
+      background: var(--surface);
+      border-radius: 6px;
+      padding: .3rem .8rem;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .range-badge strong { color: var(--text); }
+
+    /* ---- start button area ---- */
+    .mic-status {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+    .mic-led {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .mic-led.active { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+    .mic-led.error  { background: var(--accent); }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="index.html">🎵 e_music_tools</a>
+    <a href="metronome.html">Metronome</a>
+    <a href="tuner.html" class="active">Tuner</a>
+    <a href="piano.html">Piano</a>
+    <a href="drumkit.html">Drum&nbsp;Kit</a>
+  </nav>
+
+  <main>
+    <h1>Brass Tuner</h1>
+    <h2>Microphone pitch detector – optimised for brass instruments</h2>
+
+    <div class="card">
+      <div class="tuner-wrap">
+
+        <!-- needle meter -->
+        <div class="meter-container">
+          <svg class="meter-arc" viewBox="0 0 300 160" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- arc background -->
+            <path d="M30 150 A 120 120 0 0 1 270 150" stroke="#334" stroke-width="14"
+                  stroke-linecap="round"/>
+            <!-- in-tune zone (±10 cents ≈ ±15°) -->
+            <path d="M130 150 A 120 120 0 0 1 170 150" stroke="#4caf50" stroke-width="14"
+                  stroke-linecap="round"/>
+            <!-- flat (left) label -->
+            <text x="22" y="148" fill="#42a5f5" font-size="11" font-family="var(--font)">♭</text>
+            <!-- sharp (right) label -->
+            <text x="272" y="148" fill="#e94560" font-size="11" font-family="var(--font)">♯</text>
+            <!-- centre mark -->
+            <line x1="150" y1="35" x2="150" y2="50" stroke="#4caf50" stroke-width="2"/>
+            <!-- tick marks every 15° -->
+            <g stroke="#556" stroke-width="1.5">
+              <!-- -60° -->
+              <line x1="45" y1="46" x2="52" y2="58"/>
+              <!-- -45° -->
+              <line x1="76" y1="20" x2="82" y2="32"/>
+              <!-- -30° -->
+              <line x1="114" y1="7"  x2="117" y2="19"/>
+              <!-- +30° -->
+              <line x1="183" y1="7"  x2="186" y2="19"/>
+              <!-- +45° -->
+              <line x1="218" y1="20" x2="224" y2="32"/>
+              <!-- +60° -->
+              <line x1="248" y1="46" x2="255" y2="58"/>
+            </g>
+            <!-- needle -->
+            <line id="needle"
+                  x1="150" y1="150"
+                  x2="150" y2="38"
+                  stroke="var(--accent)" stroke-width="3"
+                  stroke-linecap="round"/>
+            <!-- pivot -->
+            <circle cx="150" cy="150" r="7" fill="var(--surface)" stroke="#556" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <!-- note name + cents -->
+        <div class="note-name" id="noteName">–</div>
+        <div class="note-freq" id="noteFreq"></div>
+        <div class="cents-display silent" id="centsDisplay">–</div>
+
+        <!-- start / stop -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem">
+          <button class="btn btn-primary" id="btnMic">🎤 Start Tuner</button>
+          <div class="mic-status">
+            <div class="mic-led" id="micLed"></div>
+            <span id="micStatus">Microphone inactive</span>
+          </div>
+        </div>
+
+        <!-- brass instrument range info -->
+        <div class="range-info">
+          <div class="range-badge">🎺 Trumpet <strong>E3 – C6</strong></div>
+          <div class="range-badge">🎷 French Horn <strong>B♭1 – F5</strong></div>
+          <div class="range-badge">🎸 Trombone <strong>E2 – F5</strong></div>
+          <div class="range-badge">🎵 Tuba <strong>D1 – F4</strong></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>e_music_tools &mdash; open source music utilities for the browser</footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    /* ---- note table ---- */
+    const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+    const A4 = 440;
+    const A4_MIDI = 69;
+
+    function freqToMidi(f) {
+      return 12 * Math.log2(f / A4) + A4_MIDI;
+    }
+    function midiToFreq(m) {
+      return A4 * Math.pow(2, (m - A4_MIDI) / 12);
+    }
+    function noteName(midi) {
+      const oct = Math.floor(midi / 12) - 1;
+      return NOTE_NAMES[(midi % 12 + 12) % 12] + oct;
+    }
+
+    /* ---- autocorrelation pitch detection ---- */
+    function detectPitch(buf, sampleRate) {
+      const SIZE = buf.length;
+      const MAX_SAMPLES = Math.floor(SIZE / 2);
+      const MIN_FREQ = 50;
+      const MAX_FREQ = 1400;
+
+      let best = -1, bestCorr = 0;
+      const minPeriod = Math.floor(sampleRate / MAX_FREQ);
+      const maxPeriod = Math.floor(sampleRate / MIN_FREQ);
+
+      // RMS gate – ignore silence
+      let rms = 0;
+      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / SIZE);
+      if (rms < 0.01) return -1;
+
+      for (let tau = minPeriod; tau <= Math.min(maxPeriod, MAX_SAMPLES); tau++) {
+        let corr = 0;
+        for (let i = 0; i < MAX_SAMPLES; i++) corr += buf[i] * buf[i + tau];
+        if (corr > bestCorr) { bestCorr = corr; best = tau; }
+      }
+      if (best === -1) return -1;
+
+      // parabolic interpolation for sub-sample accuracy
+      if (best > 0 && best < MAX_SAMPLES - 1) {
+        const y1 = acf(buf, MAX_SAMPLES, best - 1);
+        const y2 = acf(buf, MAX_SAMPLES, best);
+        const y3 = acf(buf, MAX_SAMPLES, best + 1);
+        const denom = 2 * y2 - y1 - y3;
+        if (denom !== 0) best += 0.5 * (y1 - y3) / denom;
+      }
+
+      return sampleRate / best;
+    }
+
+    function acf(buf, n, tau) {
+      let s = 0;
+      for (let i = 0; i < n; i++) s += buf[i] * buf[i + tau];
+      return s;
+    }
+
+    /* ---- UI refs ---- */
+    const needle       = document.getElementById('needle');
+    const noteName_el  = document.getElementById('noteName');
+    const noteFreq_el  = document.getElementById('noteFreq');
+    const centsDisp    = document.getElementById('centsDisplay');
+    const btnMic       = document.getElementById('btnMic');
+    const micLed       = document.getElementById('micLed');
+    const micStatus    = document.getElementById('micStatus');
+
+    /* ---- needle update ---- */
+    function setNeedle(cents) {
+      // map ±50 cents → ±75 degrees
+      const deg = Math.max(-75, Math.min(75, cents * 1.5));
+      needle.setAttribute('transform', `rotate(${deg}, 150, 150)`);
+    }
+
+    function showSilence() {
+      noteName_el.textContent = '–';
+      noteFreq_el.textContent = '';
+      centsDisp.textContent = '–';
+      centsDisp.className = 'cents-display silent';
+      setNeedle(0);
+    }
+
+    /* ---- audio pipeline ---- */
+    let audioCtx = null, analyser = null, stream = null, rafId = null;
+
+    async function startTuner() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      } catch (err) {
+        micLed.className = 'mic-led error';
+        micStatus.textContent = 'Microphone access denied';
+        active = false;
+        return;
+      }
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 4096;
+      analyser.smoothingTimeConstant = 0;
+
+      const src = audioCtx.createMediaStreamSource(stream);
+      src.connect(analyser);
+
+      micLed.className = 'mic-led active';
+      micStatus.textContent = 'Listening…';
+      btnMic.textContent = '⏹ Stop Tuner';
+      btnMic.classList.replace('btn-primary','btn-secondary');
+
+      const buf = new Float32Array(analyser.fftSize);
+
+      let silenceFrames = 0;
+      function loop() {
+        analyser.getFloatTimeDomainData(buf);
+        const freq = detectPitch(buf, audioCtx.sampleRate);
+
+        if (freq > 0) {
+          silenceFrames = 0;
+          const midi   = freqToMidi(freq);
+          const round  = Math.round(midi);
+          const cents  = (midi - round) * 100;
+          const target = midiToFreq(round);
+
+          noteName_el.textContent = noteName(round);
+          noteFreq_el.textContent = `${freq.toFixed(1)} Hz  (target ${target.toFixed(1)} Hz)`;
+
+          const absCents = Math.abs(cents);
+          if (absCents < 5) {
+            centsDisp.textContent = '✓ In tune';
+            centsDisp.className = 'cents-display in-tune';
+          } else if (cents > 0) {
+            centsDisp.textContent = `+${cents.toFixed(1)} ¢ sharp`;
+            centsDisp.className = 'cents-display sharp';
+          } else {
+            centsDisp.textContent = `${cents.toFixed(1)} ¢ flat`;
+            centsDisp.className = 'cents-display flat';
+          }
+          setNeedle(cents);
+        } else {
+          silenceFrames++;
+          if (silenceFrames > 20) showSilence();
+        }
+
+        rafId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function stopTuner() {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      if (audioCtx) { audioCtx.close(); audioCtx = null; }
+      analyser = null;
+      micLed.className = 'mic-led';
+      micStatus.textContent = 'Microphone inactive';
+      btnMic.textContent = '🎤 Start Tuner';
+      btnMic.classList.replace('btn-secondary','btn-primary');
+      showSilence();
+    }
+
+    let active = false;
+    btnMic.addEventListener('click', () => {
+      active = !active;
+      active ? startTuner() : stopTuner();
+    });
+  })();
+  </script>
+</body>
+</html>

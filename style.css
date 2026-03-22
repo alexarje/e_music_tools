@@ -1,0 +1,157 @@
+/* ============================================================
+   e_music_tools – shared styles
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #1a1a2e;
+  --surface:   #16213e;
+  --card:      #0f3460;
+  --accent:    #e94560;
+  --accent2:   #f5a623;
+  --text:      #eaeaea;
+  --muted:     #8892a4;
+  --radius:    12px;
+  --shadow:    0 4px 24px rgba(0,0,0,.4);
+  --font:      'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- top nav ---- */
+.topnav {
+  background: var(--surface);
+  padding: .75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  flex-wrap: wrap;
+}
+.topnav .brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: .04em;
+}
+.topnav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .95rem;
+  transition: color .2s;
+}
+.topnav a:hover, .topnav a.active { color: var(--text); }
+
+/* ---- main content ---- */
+main {
+  flex: 1;
+  padding: 2rem 1.5rem;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+h1 { font-size: 1.8rem; margin-bottom: .4rem; }
+h2 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--muted); font-weight: 400; }
+
+/* ---- card ---- */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  padding: .55rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: .95rem;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s, transform .1s;
+  user-select: none;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid #334; }
+.btn-accent2 { background: var(--accent2); color: #1a1a2e; }
+
+.btn:hover { filter: brightness(1.15); }
+
+/* ---- range / slider ---- */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+}
+
+/* ---- index grid ---- */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.app-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem;
+  text-decoration: none;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  transition: transform .2s, filter .2s;
+}
+.app-card:hover { transform: translateY(-4px); filter: brightness(1.1); }
+.app-card .icon { font-size: 3rem; }
+.app-card .label { font-weight: 600; font-size: 1.1rem; }
+.app-card .desc { color: var(--muted); font-size: .85rem; text-align: center; }
+
+/* ---- footer ---- */
+footer {
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted);
+  font-size: .8rem;
+}
