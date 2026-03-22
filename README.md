@@ -8,6 +8,7 @@ A small collection of in-browser music utilities built with pure HTML, CSS and t
 |-----|------|-------------|
 | 🥁 **Metronome** | `metronome/index.html` | BPM control (40–240), tap tempo, time-signature selector, visual pendulum & beat flash. Keyboard: `Space` start/stop, `T` tap, `↑/↓` adjust BPM. |
 | 🎺 **Brass Tuner** | `tuner/index.html` | Microphone pitch detector using autocorrelation. Shows note name, frequency, cents deviation and a needle meter. Optimised for the range of brass instruments (tuba → trumpet). |
+| 🎸 **Guitar Tuner** | `guitar-tuner/index.html` | Microphone tuner for standard guitar tuning (E2 A2 D3 G3 B3 E4) with nearest-string highlighting and cents feedback. |
 | 🎹 **Piano** | `piano/index.html` | Interactive two-octave on-screen keyboard (C4–B5 by default). Supports mouse, touch and computer-keyboard input. Octave shift, four waveforms, volume control. |
 | 🪘 **Drum Kit** | `drumkit/index.html` | Eight synthesised pads (Kick, Snare, Hi-hat ×2, Tom ×3, Crash) playable by clicking or via keyboard shortcuts `A S D F G H J K`. |
 

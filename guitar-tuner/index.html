@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guitar Tuner – e_music_tools</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .tuner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .note-name {
+      font-size: 4.5rem;
+      font-weight: 700;
+      line-height: 1;
+      min-height: 1em;
+      letter-spacing: -.02em;
+    }
+    .note-freq {
+      color: var(--muted);
+      font-size: .95rem;
+      text-align: center;
+      min-height: 1.2em;
+    }
+    .cents-display {
+      font-size: 1.3rem;
+      font-weight: 600;
+      min-height: 1.4em;
+      text-align: center;
+    }
+    .cents-display.in-tune { color: #4caf50; }
+    .cents-display.sharp { color: var(--accent); }
+    .cents-display.flat { color: #42a5f5; }
+    .cents-display.silent { color: var(--muted); }
+
+    .mic-status {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+    .mic-led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .mic-led.active { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+    .mic-led.error { background: var(--accent); }
+
+    .string-grid {
+      width: 100%;
+      max-width: 520px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: .6rem;
+    }
+    .string-card {
+      background: var(--surface);
+      border: 1px solid #334;
+      border-radius: 8px;
+      padding: .6rem .7rem;
+      font-size: .85rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color .12s, box-shadow .12s, color .12s;
+    }
+    .string-card strong { color: var(--text); }
+    .string-card.active {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 1px rgba(245,166,35,.35) inset;
+      color: var(--text);
+    }
+
+    .tip {
+      font-size: .82rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="../index.html">🎵</a>
+    <a href="../metronome/">Metronom</a>
+    <a href="../tuner/">Tuner</a>
+    <a href="../guitar-tuner/" class="active">Gitarstemmeapparat</a>
+    <a href="../piano/">Piano</a>
+    <a href="../drumkit/">Trommesett</a>
+  </nav>
+
+  <main>
+    <div class="card">
+      <div class="tuner-wrap">
+        <div class="note-name" id="noteName">-</div>
+        <div class="note-freq" id="noteFreq"></div>
+        <div class="cents-display silent" id="centsDisplay">-</div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem">
+          <button class="btn btn-primary" id="btnMic">🎤 Start Guitar Tuner</button>
+          <div class="mic-status">
+            <div class="mic-led" id="micLed"></div>
+            <span id="micStatus">Microphone inactive</span>
+          </div>
+        </div>
+
+        <div class="string-grid" id="stringGrid">
+          <div class="string-card" data-note="E2"><strong>6th string</strong><span>E2 • 82.4 Hz</span></div>
+          <div class="string-card" data-note="A2"><strong>5th string</strong><span>A2 • 110.0 Hz</span></div>
+          <div class="string-card" data-note="D3"><strong>4th string</strong><span>D3 • 146.8 Hz</span></div>
+          <div class="string-card" data-note="G3"><strong>3rd string</strong><span>G3 • 196.0 Hz</span></div>
+          <div class="string-card" data-note="B3"><strong>2nd string</strong><span>B3 • 246.9 Hz</span></div>
+          <div class="string-card" data-note="E4"><strong>1st string</strong><span>E4 • 329.6 Hz</span></div>
+        </div>
+
+        <div class="tip">
+          Pluck one string at a time for best accuracy. The closest standard guitar string is highlighted.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const A4 = 440;
+    const A4_MIDI = 69;
+
+    const GUITAR_STRINGS = [
+      { name: 'E2', midi: 40, freq: 82.41 },
+      { name: 'A2', midi: 45, freq: 110.00 },
+      { name: 'D3', midi: 50, freq: 146.83 },
+      { name: 'G3', midi: 55, freq: 196.00 },
+      { name: 'B3', midi: 59, freq: 246.94 },
+      { name: 'E4', midi: 64, freq: 329.63 },
+    ];
+
+    function freqToMidi(freq) {
+      return 12 * Math.log2(freq / A4) + A4_MIDI;
+    }
+
+    function midiToFreq(midi) {
+      return A4 * Math.pow(2, (midi - A4_MIDI) / 12);
+    }
+
+    function midiToName(midi) {
+      const oct = Math.floor(midi / 12) - 1;
+      return NOTE_NAMES[(midi % 12 + 12) % 12] + oct;
+    }
+
+    function detectPitch(buf, sampleRate) {
+      const size = buf.length;
+      const maxSamples = Math.floor(size / 2);
+      const minFreq = 70;
+      const maxFreq = 420;
+      const minPeriod = Math.floor(sampleRate / maxFreq);
+      const maxPeriod = Math.floor(sampleRate / minFreq);
+
+      let rms = 0;
+      for (let i = 0; i < size; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / size);
+      if (rms < 0.01) return -1;
+
+      let bestPeriod = -1;
+      let bestCorr = 0;
+
+      for (let tau = minPeriod; tau <= Math.min(maxPeriod, maxSamples); tau++) {
+        let corr = 0;
+        for (let i = 0; i < maxSamples; i++) corr += buf[i] * buf[i + tau];
+        if (corr > bestCorr) {
+          bestCorr = corr;
+          bestPeriod = tau;
+        }
+      }
+
+      if (bestPeriod <= 0) return -1;
+      return sampleRate / bestPeriod;
+    }
+
+    function nearestString(midi) {
+      let nearest = GUITAR_STRINGS[0];
+      let bestDist = Math.abs(midi - nearest.midi);
+      for (const s of GUITAR_STRINGS) {
+        const dist = Math.abs(midi - s.midi);
+        if (dist < bestDist) {
+          bestDist = dist;
+          nearest = s;
+        }
+      }
+      return nearest;
+    }
+
+    const noteNameEl = document.getElementById('noteName');
+    const noteFreqEl = document.getElementById('noteFreq');
+    const centsEl = document.getElementById('centsDisplay');
+    const btnMic = document.getElementById('btnMic');
+    const micLed = document.getElementById('micLed');
+    const micStatus = document.getElementById('micStatus');
+    const stringCards = document.querySelectorAll('.string-card');
+
+    let audioCtx = null;
+    let analyser = null;
+    let stream = null;
+    let rafId = null;
+    let active = false;
+
+    function clearStringHighlight() {
+      stringCards.forEach(card => card.classList.remove('active'));
+    }
+
+    function showSilence() {
+      noteNameEl.textContent = '-';
+      noteFreqEl.textContent = '';
+      centsEl.textContent = '-';
+      centsEl.className = 'cents-display silent';
+      clearStringHighlight();
+    }
+
+    async function startTuner() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      } catch (err) {
+        micLed.className = 'mic-led error';
+        micStatus.textContent = 'Microphone access denied';
+        active = false;
+        return;
+      }
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 4096;
+      analyser.smoothingTimeConstant = 0;
+
+      const src = audioCtx.createMediaStreamSource(stream);
+      src.connect(analyser);
+
+      micLed.className = 'mic-led active';
+      micStatus.textContent = 'Listening...';
+      btnMic.textContent = '⏹ Stop Guitar Tuner';
+      btnMic.classList.replace('btn-primary', 'btn-secondary');
+
+      const buf = new Float32Array(analyser.fftSize);
+      let silenceFrames = 0;
+
+      function loop() {
+        analyser.getFloatTimeDomainData(buf);
+        const freq = detectPitch(buf, audioCtx.sampleRate);
+
+        if (freq > 0) {
+          silenceFrames = 0;
+          const midiFloat = freqToMidi(freq);
+          const midiRounded = Math.round(midiFloat);
+          const cents = (midiFloat - midiRounded) * 100;
+          const nearest = nearestString(midiFloat);
+          const nearestCents = (midiFloat - nearest.midi) * 100;
+
+          noteNameEl.textContent = midiToName(midiRounded);
+          noteFreqEl.textContent = `${freq.toFixed(1)} Hz (target ${midiToFreq(midiRounded).toFixed(1)} Hz)`;
+
+          if (Math.abs(nearestCents) < 5) {
+            centsEl.textContent = `${nearest.name} ✓ In tune`;
+            centsEl.className = 'cents-display in-tune';
+          } else if (nearestCents > 0) {
+            centsEl.textContent = `${nearest.name} +${nearestCents.toFixed(1)} cents sharp`;
+            centsEl.className = 'cents-display sharp';
+          } else {
+            centsEl.textContent = `${nearest.name} ${nearestCents.toFixed(1)} cents flat`;
+            centsEl.className = 'cents-display flat';
+          }
+
+          clearStringHighlight();
+          const card = document.querySelector(`.string-card[data-note="${nearest.name}"]`);
+          if (card) card.classList.add('active');
+        } else {
+          silenceFrames++;
+          if (silenceFrames > 20) showSilence();
+        }
+
+        rafId = requestAnimationFrame(loop);
+      }
+
+      loop();
+    }
+
+    function stopTuner() {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+      analyser = null;
+      micLed.className = 'mic-led';
+      micStatus.textContent = 'Microphone inactive';
+      btnMic.textContent = '🎤 Start Guitar Tuner';
+      btnMic.classList.replace('btn-secondary', 'btn-primary');
+      showSilence();
+    }
+
+    btnMic.addEventListener('click', () => {
+      active = !active;
+      if (active) startTuner();
+      else stopTuner();
+    });
+  })();
+  </script>
+</body>
+</html>
