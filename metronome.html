@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metronome – e_music_tools</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .metro-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* ---- pendulum ---- */
+    .pendulum-container {
+      width: 120px;
+      height: 200px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      position: relative;
+    }
+    .pendulum-arm {
+      width: 4px;
+      height: 180px;
+      background: var(--muted);
+      border-radius: 2px;
+      transform-origin: top center;
+      transition: transform .05s linear;
+      position: relative;
+    }
+    .pendulum-bob {
+      position: absolute;
+      bottom: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .pendulum-arm.beat-left  { transform: rotate(-30deg); }
+    .pendulum-arm.beat-right { transform: rotate( 30deg); }
+
+    /* ---- beat flash ---- */
+    .beat-flash {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 3px solid var(--card);
+      transition: background .06s, box-shadow .06s;
+    }
+    .beat-flash.accent  { background: var(--accent);  box-shadow: 0 0 20px var(--accent); }
+    .beat-flash.regular { background: var(--accent2); box-shadow: 0 0 14px var(--accent2); }
+
+    /* ---- BPM display ---- */
+    .bpm-display {
+      font-size: 5rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -.02em;
+    }
+    .bpm-label { color: var(--muted); font-size: .9rem; text-align: center; margin-top: .2rem; }
+
+    /* ---- controls ---- */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      justify-content: center;
+    }
+    .bpm-adj {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .bpm-adj button {
+      width: 44px; height: 44px;
+      font-size: 1.4rem;
+      padding: 0;
+    }
+    .bpm-adj span {
+      width: 80px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .slider-wrap { width: 100%; max-width: 360px; }
+    .slider-wrap label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+
+    /* ---- time-signature ---- */
+    .ts-wrap {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+    .ts-wrap select {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid #334;
+      border-radius: 6px;
+      padding: .3rem .6rem;
+      font-family: var(--font);
+      font-size: .9rem;
+      cursor: pointer;
+    }
+
+    /* ---- beat dots ---- */
+    .beat-dots {
+      display: flex;
+      gap: .5rem;
+    }
+    .dot {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--muted);
+      transition: background .06s, border-color .06s;
+    }
+    .dot.active-accent  { background: var(--accent);  border-color: var(--accent); }
+    .dot.active-regular { background: var(--accent2); border-color: var(--accent2); }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="index.html">🎵 e_music_tools</a>
+    <a href="metronome.html" class="active">Metronome</a>
+    <a href="tuner.html">Tuner</a>
+    <a href="piano.html">Piano</a>
+    <a href="drumkit.html">Drum&nbsp;Kit</a>
+  </nav>
+
+  <main>
+    <h1>Metronome</h1>
+    <h2>Tap, click, or use the keyboard to keep time</h2>
+
+    <div class="card">
+      <div class="metro-wrap">
+        <!-- pendulum -->
+        <div class="pendulum-container">
+          <div class="pendulum-arm" id="pendulum">
+            <div class="pendulum-bob"></div>
+          </div>
+        </div>
+
+        <!-- flash dot + beat dots -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem">
+          <div class="beat-flash" id="beatFlash"></div>
+          <div class="beat-dots" id="beatDots"></div>
+        </div>
+
+        <!-- BPM readout -->
+        <div style="text-align:center">
+          <div class="bpm-display" id="bpmDisplay">120</div>
+          <div class="bpm-label">BPM</div>
+        </div>
+
+        <!-- BPM nudge + start -->
+        <div class="controls">
+          <div class="bpm-adj">
+            <button class="btn btn-secondary" id="btnMinus10" title="-10">−10</button>
+            <button class="btn btn-secondary" id="btnMinus1"  title="-1">−</button>
+            <span id="bpmVal">120</span>
+            <button class="btn btn-secondary" id="btnPlus1"   title="+1">+</button>
+            <button class="btn btn-secondary" id="btnPlus10"  title="+10">+10</button>
+          </div>
+          <button class="btn btn-primary" id="btnStart">▶ Start</button>
+          <button class="btn btn-accent2" id="btnTap">Tap Tempo</button>
+        </div>
+
+        <!-- slider -->
+        <div class="slider-wrap">
+          <label><span>40 BPM</span><span>240 BPM</span></label>
+          <input type="range" id="bpmSlider" min="40" max="240" value="120" />
+        </div>
+
+        <!-- time signature -->
+        <div class="ts-wrap">
+          <span>Time signature</span>
+          <select id="tsSelect">
+            <option value="2">2/4</option>
+            <option value="3">3/4</option>
+            <option value="4" selected>4/4</option>
+            <option value="6">6/8</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>e_music_tools &mdash; open source music utilities for the browser</footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    /* ---- state ---- */
+    let bpm = 120;
+    let beatsPerBar = 4;
+    let running = false;
+    let currentBeat = 0;
+    let nextBeatTime = 0;
+    let pendulumDir = 1; // 1 = right, -1 = left
+    let schedulerTimer = null;
+    let tapTimes = [];
+
+    const LOOK_AHEAD   = 0.1;   // seconds ahead to schedule
+    const SCHEDULE_INT = 25;    // ms interval for scheduler loop
+
+    /* ---- audio ---- */
+    let audioCtx = null;
+    function getCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function scheduleClick(time, isAccent) {
+      const ctx = getCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (isAccent) {
+        osc.frequency.value = 1200;
+        gain.gain.setValueAtTime(1.0, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+      } else {
+        osc.frequency.value = 800;
+        gain.gain.setValueAtTime(0.5, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+      }
+
+      osc.start(time);
+      osc.stop(time + 0.08);
+    }
+
+    /* ---- scheduler (Web Audio clock) ---- */
+    function scheduler() {
+      const ctx = getCtx();
+      while (nextBeatTime < ctx.currentTime + LOOK_AHEAD) {
+        const isAccent = currentBeat === 0;
+        scheduleClick(nextBeatTime, isAccent);
+
+        // UI update via setTimeout at the right wall-clock time
+        const delay = (nextBeatTime - ctx.currentTime) * 1000;
+        const beat  = currentBeat;
+        setTimeout(() => updateUI(beat), delay < 0 ? 0 : delay);
+
+        nextBeatTime += 60 / bpm;
+        currentBeat = (currentBeat + 1) % beatsPerBar;
+      }
+    }
+
+    /* ---- UI updates ---- */
+    const pendulum  = document.getElementById('pendulum');
+    const beatFlash = document.getElementById('beatFlash');
+    const bpmDisplay= document.getElementById('bpmDisplay');
+    const bpmVal    = document.getElementById('bpmVal');
+    const bpmSlider = document.getElementById('bpmSlider');
+    const btnStart  = document.getElementById('btnStart');
+    const beatDots  = document.getElementById('beatDots');
+
+    function buildBeatDots() {
+      beatDots.innerHTML = '';
+      for (let i = 0; i < beatsPerBar; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        beatDots.appendChild(d);
+      }
+    }
+
+    function updateUI(beat) {
+      const isAccent = beat === 0;
+      // flash
+      beatFlash.classList.remove('accent','regular');
+      void beatFlash.offsetWidth; // reflow for re-animation
+      beatFlash.classList.add(isAccent ? 'accent' : 'regular');
+      setTimeout(() => beatFlash.classList.remove('accent','regular'), 150);
+
+      // pendulum
+      pendulum.classList.remove('beat-left','beat-right');
+      void pendulum.offsetWidth;
+      pendulum.classList.add(pendulumDir > 0 ? 'beat-right' : 'beat-left');
+      pendulumDir *= -1;
+
+      // dots
+      const dots = beatDots.querySelectorAll('.dot');
+      dots.forEach((d, i) => {
+        d.classList.remove('active-accent','active-regular');
+        if (i === beat) d.classList.add(beat === 0 ? 'active-accent' : 'active-regular');
+      });
+    }
+
+    function setBpm(v) {
+      bpm = Math.max(40, Math.min(240, v));
+      bpmDisplay.textContent = bpm;
+      bpmVal.textContent     = bpm;
+      bpmSlider.value        = bpm;
+    }
+
+    /* ---- start / stop ---- */
+    function start() {
+      const ctx = getCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      running      = true;
+      currentBeat  = 0;
+      pendulumDir  = 1;
+      nextBeatTime = ctx.currentTime + 0.05;
+      schedulerTimer = setInterval(scheduler, SCHEDULE_INT);
+      btnStart.textContent = '⏹ Stop';
+      btnStart.classList.replace('btn-primary','btn-secondary');
+    }
+
+    function stop() {
+      running = false;
+      clearInterval(schedulerTimer);
+      schedulerTimer = null;
+      pendulum.classList.remove('beat-left','beat-right');
+      beatFlash.classList.remove('accent','regular');
+      beatDots.querySelectorAll('.dot').forEach(d => d.classList.remove('active-accent','active-regular'));
+      btnStart.textContent = '▶ Start';
+      btnStart.classList.replace('btn-secondary','btn-primary');
+    }
+
+    /* ---- event listeners ---- */
+    btnStart.addEventListener('click', () => running ? stop() : start());
+
+    document.getElementById('btnMinus10').addEventListener('click', () => setBpm(bpm - 10));
+    document.getElementById('btnMinus1').addEventListener('click',  () => setBpm(bpm - 1));
+    document.getElementById('btnPlus1').addEventListener('click',   () => setBpm(bpm + 1));
+    document.getElementById('btnPlus10').addEventListener('click',  () => setBpm(bpm + 10));
+
+    bpmSlider.addEventListener('input', () => setBpm(+bpmSlider.value));
+
+    document.getElementById('tsSelect').addEventListener('change', e => {
+      beatsPerBar = +e.target.value;
+      currentBeat = 0;
+      buildBeatDots();
+    });
+
+    /* ---- tap tempo ---- */
+    const btnTap = document.getElementById('btnTap');
+    function handleTap() {
+      const now = Date.now();
+      tapTimes.push(now);
+      // keep last 8 taps
+      if (tapTimes.length > 8) tapTimes.shift();
+      if (tapTimes.length > 1) {
+        const gaps = [];
+        for (let i = 1; i < tapTimes.length; i++) gaps.push(tapTimes[i] - tapTimes[i-1]);
+        const avgGap = gaps.reduce((a,b) => a + b, 0) / gaps.length;
+        setBpm(Math.round(60000 / avgGap));
+      }
+      // reset tap buffer after 2s silence
+      clearTimeout(btnTap._resetTimer);
+      btnTap._resetTimer = setTimeout(() => { tapTimes = []; }, 2000);
+    }
+    btnTap.addEventListener('click', handleTap);
+
+    /* ---- keyboard shortcuts ---- */
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.code === 'Space') { e.preventDefault(); running ? stop() : start(); }
+      if (e.code === 'KeyT')  handleTap();
+      if (e.code === 'ArrowUp')   { e.preventDefault(); setBpm(bpm + 1); }
+      if (e.code === 'ArrowDown') { e.preventDefault(); setBpm(bpm - 1); }
+    });
+
+    /* ---- init ---- */
+    buildBeatDots();
+  })();
+  </script>
+</body>
+</html>
