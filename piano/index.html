@@ -156,7 +156,7 @@
         <!-- octave shift -->
         <div class="octave-ctrl">
           <button class="btn btn-secondary" id="btnOctDown">⬇ Octave</button>
-          <span id="octaveLabel">C4 – B5</span>
+          <span id="octaveLabel">C4 – C6</span>
           <button class="btn btn-secondary" id="btnOctUp">⬆ Octave</button>
         </div>
 
@@ -263,7 +263,7 @@
     /* ---- build keyboard DOM ---- */
     const keyboard = document.getElementById('keyboard');
 
-    // We render 2 octaves = 14 white keys, 10 black keys
+    // We render 2 octaves + top C = 15 white keys, 10 black keys
     // Layout of one octave: C(w) C#(b) D(w) D#(b) E(w) F(w) F#(b) G(w) G#(b) A(w) A#(b) B(w)
     // White key positions: 0 2 4 5 7 9 11 (semitones)
     const WHITE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
@@ -279,7 +279,7 @@
 
     function buildKeys() {
       keyboard.innerHTML = '';
-      const totalWhites = 14; // 2 octaves
+      const totalWhites = 15; // 2 octaves + top C
       keyboard.style.width = (totalWhites * WHITE_W) + 'px';
 
       const sm = startMidi();
@@ -313,6 +313,14 @@
           whiteIdx++;
         }
       }
+
+      // Add final top C key so the visible range ends on C.
+      const topMidi = sm + 24;
+      const topKey = document.createElement('div');
+      topKey.className = 'key-white';
+      topKey.dataset.midi = topMidi;
+      topKey.textContent = label(topMidi);
+      keyboard.appendChild(topKey);
     }
 
     /* ---- pointer events ---- */
@@ -380,7 +388,7 @@
     /* ---- octave controls ---- */
     const octaveLabel = document.getElementById('octaveLabel');
     function updateOctaveLabel() {
-      octaveLabel.textContent = `C${baseOctave} – B${baseOctave + 1}`;
+      octaveLabel.textContent = `C${baseOctave} – C${baseOctave + 2}`;
     }
     document.getElementById('btnOctDown').addEventListener('click', () => {
       if (baseOctave > 1) { baseOctave--; buildKeys(); updateOctaveLabel(); }
