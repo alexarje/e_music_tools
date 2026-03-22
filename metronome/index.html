@@ -13,38 +13,6 @@
       gap: 2rem;
     }
 
-    /* ---- pendulum ---- */
-    .pendulum-container {
-      width: 120px;
-      height: 200px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      position: relative;
-    }
-    .pendulum-arm {
-      width: 4px;
-      height: 180px;
-      background: var(--muted);
-      border-radius: 2px;
-      transform-origin: top center;
-      transition: transform .05s linear;
-      position: relative;
-    }
-    .pendulum-bob {
-      position: absolute;
-      bottom: -16px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 12px var(--accent);
-    }
-    .pendulum-arm.beat-left  { transform: rotate(-30deg); }
-    .pendulum-arm.beat-right { transform: rotate( 30deg); }
-
     /* ---- beat flash ---- */
     .beat-flash {
       width: 60px;
@@ -132,11 +100,37 @@
     }
     .dot.active-accent  { background: var(--accent);  border-color: var(--accent); }
     .dot.active-regular { background: var(--accent2); border-color: var(--accent2); }
+
+    /* ---- tempo names ---- */
+    .tempo-guide {
+      width: 100%;
+      max-width: 480px;
+      border: 1px solid #334;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .tempo-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .55rem .8rem;
+      font-size: .85rem;
+      color: var(--muted);
+      border-top: 1px solid #2a3558;
+      transition: background .15s, color .15s;
+    }
+    .tempo-item:first-child { border-top: none; }
+    .tempo-item .tempo-name { color: var(--text); font-weight: 600; }
+    .tempo-item.active {
+      background: rgba(233,69,96,.14);
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
   <nav class="topnav">
-    <a class="brand" href="../index.html">🎵 e_music_tools</a>
+    <a class="brand" href="../index.html">🎵</a>
     <a href="../metronome/" class="active">Metronom</a>
     <a href="../tuner/">Tuner</a>
     <a href="../piano/">Piano</a>
@@ -147,13 +141,6 @@
 
     <div class="card">
       <div class="metro-wrap">
-        <!-- pendulum -->
-        <div class="pendulum-container">
-          <div class="pendulum-arm" id="pendulum">
-            <div class="pendulum-bob"></div>
-          </div>
-        </div>
-
         <!-- flash dot + beat dots -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem">
           <div class="beat-flash" id="beatFlash"></div>
@@ -195,6 +182,16 @@
             <option value="6">6/8</option>
           </select>
         </div>
+
+        <div class="tempo-guide" id="tempoGuide" aria-label="Tempo names by BPM range">
+          <div class="tempo-item" data-min="40" data-max="59"><span class="tempo-name">Largo</span><span>40-59 BPM</span></div>
+          <div class="tempo-item" data-min="60" data-max="75"><span class="tempo-name">Adagio</span><span>60-75 BPM</span></div>
+          <div class="tempo-item" data-min="76" data-max="107"><span class="tempo-name">Andante</span><span>76-107 BPM</span></div>
+          <div class="tempo-item" data-min="108" data-max="119"><span class="tempo-name">Moderato</span><span>108-119 BPM</span></div>
+          <div class="tempo-item" data-min="120" data-max="167"><span class="tempo-name">Allegro</span><span>120-167 BPM</span></div>
+          <div class="tempo-item" data-min="168" data-max="200"><span class="tempo-name">Presto</span><span>168-200 BPM</span></div>
+          <div class="tempo-item" data-min="201" data-max="240"><span class="tempo-name">Prestissimo</span><span>201-240 BPM</span></div>
+        </div>
       </div>
     </div>
   </main>
@@ -210,7 +207,6 @@
     let running = false;
     let currentBeat = 0;
     let nextBeatTime = 0;
-    let pendulumDir = 1; // 1 = right, -1 = left
     let schedulerTimer = null;
     let tapTimes = [];
 
@@ -263,13 +259,13 @@
     }
 
     /* ---- UI updates ---- */
-    const pendulum  = document.getElementById('pendulum');
     const beatFlash = document.getElementById('beatFlash');
     const bpmDisplay= document.getElementById('bpmDisplay');
     const bpmVal    = document.getElementById('bpmVal');
     const bpmSlider = document.getElementById('bpmSlider');
     const btnStart  = document.getElementById('btnStart');
     const beatDots  = document.getElementById('beatDots');
+    const tempoItems = document.querySelectorAll('#tempoGuide .tempo-item');
 
     function buildBeatDots() {
       beatDots.innerHTML = '';
@@ -288,12 +284,6 @@
       beatFlash.classList.add(isAccent ? 'accent' : 'regular');
       setTimeout(() => beatFlash.classList.remove('accent','regular'), 150);
 
-      // pendulum
-      pendulum.classList.remove('beat-left','beat-right');
-      void pendulum.offsetWidth;
-      pendulum.classList.add(pendulumDir > 0 ? 'beat-right' : 'beat-left');
-      pendulumDir *= -1;
-
       // dots
       const dots = beatDots.querySelectorAll('.dot');
       dots.forEach((d, i) => {
@@ -302,11 +292,20 @@
       });
     }
 
+    function updateTempoGuide() {
+      tempoItems.forEach(item => {
+        const min = Number(item.dataset.min);
+        const max = Number(item.dataset.max);
+        item.classList.toggle('active', bpm >= min && bpm <= max);
+      });
+    }
+
     function setBpm(v) {
       bpm = Math.max(40, Math.min(240, v));
       bpmDisplay.textContent = bpm;
       bpmVal.textContent     = bpm;
       bpmSlider.value        = bpm;
+      updateTempoGuide();
     }
 
     /* ---- start / stop ---- */
@@ -315,7 +314,6 @@
       if (ctx.state === 'suspended') ctx.resume();
       running      = true;
       currentBeat  = 0;
-      pendulumDir  = 1;
       nextBeatTime = ctx.currentTime + 0.05;
       schedulerTimer = setInterval(scheduler, SCHEDULE_INT);
       btnStart.textContent = '⏹ Stop';
@@ -326,7 +324,6 @@
       running = false;
       clearInterval(schedulerTimer);
       schedulerTimer = null;
-      pendulum.classList.remove('beat-left','beat-right');
       beatFlash.classList.remove('accent','regular');
       beatDots.querySelectorAll('.dot').forEach(d => d.classList.remove('active-accent','active-regular'));
       btnStart.textContent = '▶ Start';
@@ -379,6 +376,7 @@
 
     /* ---- init ---- */
     buildBeatDots();
+    updateTempoGuide();
   })();
   </script>
 </body>
