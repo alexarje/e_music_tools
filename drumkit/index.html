@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Drum Kit – e_music_tools</title>
+  <title>Trommesett – e_music_tools</title>
   <link rel="stylesheet" href="../style.css" />
   <style>
     .drum-wrap {
@@ -121,18 +121,6 @@
           <label>🔊</label>
         </div>
 
-        <!-- keyboard hints -->
-        <div class="kb-hint">
-          <strong>Keyboard shortcuts:</strong><br/>
-          <kbd>A</kbd> Kick &nbsp;
-          <kbd>S</kbd> Snare &nbsp;
-          <kbd>D</kbd> Hi-hat (closed) &nbsp;
-          <kbd>F</kbd> Hi-hat (open)<br/>
-          <kbd>G</kbd> Tom Hi &nbsp;
-          <kbd>H</kbd> Tom Mid &nbsp;
-          <kbd>J</kbd> Tom Low &nbsp;
-          <kbd>K</kbd> Crash
-        </div>
       </div>
     </div>
   </main>
@@ -248,13 +236,13 @@
 
     /* ---- pad definitions ---- */
     const PADS = [
-      { id: 'kick',    label: 'Kick',       icon: '🦶', cls: 'pad-kick',    key: 'A', code: 'KeyA',  fn: () => kick() },
-      { id: 'snare',   label: 'Snare',      icon: '🥁', cls: 'pad-snare',   key: 'S', code: 'KeyS',  fn: () => snare() },
+      { id: 'kick',    label: 'Stortromme', icon: '🦶', cls: 'pad-kick',    key: 'A', code: 'KeyA',  fn: () => kick() },
+      { id: 'snare',   label: 'Skarptromme',icon: '🥁', cls: 'pad-snare',   key: 'S', code: 'KeyS',  fn: () => snare() },
       { id: 'hihat-c', label: 'Hi-hat ×',   icon: '🔔', cls: 'pad-hihat-c', key: 'D', code: 'KeyD',  fn: () => hihat(false) },
       { id: 'hihat-o', label: 'Hi-hat ○',   icon: '🔔', cls: 'pad-hihat-o', key: 'F', code: 'KeyF',  fn: () => hihat(true) },
-      { id: 'tom-hi',  label: 'Tom Hi',     icon: '🎵', cls: 'pad-tom-hi',  key: 'G', code: 'KeyG',  fn: () => tom(300) },
-      { id: 'tom-mid', label: 'Tom Mid',    icon: '🎵', cls: 'pad-tom-mid', key: 'H', code: 'KeyH',  fn: () => tom(200) },
-      { id: 'tom-lo',  label: 'Tom Low',    icon: '🎵', cls: 'pad-tom-lo',  key: 'J', code: 'KeyJ',  fn: () => tom(120) },
+      { id: 'tom-hi',  label: 'Hoy tom',    icon: '🎵', cls: 'pad-tom-hi',  key: 'G', code: 'KeyG',  fn: () => tom(300) },
+      { id: 'tom-mid', label: 'Midt tom',   icon: '🎵', cls: 'pad-tom-mid', key: 'H', code: 'KeyH',  fn: () => tom(200) },
+      { id: 'tom-lo',  label: 'Lav tom',    icon: '🎵', cls: 'pad-tom-lo',  key: 'J', code: 'KeyJ',  fn: () => tom(120) },
       { id: 'crash',   label: 'Crash',      icon: '💥', cls: 'pad-crash',   key: 'K', code: 'KeyK',  fn: () => crash() },
     ];
 

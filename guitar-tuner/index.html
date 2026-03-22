@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Guitar Tuner – e_music_tools</title>
+  <title>Gitarstemming – e_music_tools</title>
   <link rel="stylesheet" href="../style.css" />
   <style>
     .tuner-wrap {
@@ -106,20 +106,20 @@
         <div class="cents-display silent" id="centsDisplay">-</div>
 
         <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem">
-          <button class="btn btn-primary" id="btnMic">🎤 Start Guitar Tuner</button>
+          <button class="btn btn-primary" id="btnMic">🎤 Start</button>
           <div class="mic-status">
             <div class="mic-led" id="micLed"></div>
-            <span id="micStatus">Microphone inactive</span>
+            <span id="micStatus">Mikrofon inaktiv</span>
           </div>
         </div>
 
         <div class="string-grid" id="stringGrid">
-          <div class="string-card" data-note="E2"><strong>6th string</strong><span>E2 • 82.4 Hz</span></div>
-          <div class="string-card" data-note="A2"><strong>5th string</strong><span>A2 • 110.0 Hz</span></div>
-          <div class="string-card" data-note="D3"><strong>4th string</strong><span>D3 • 146.8 Hz</span></div>
-          <div class="string-card" data-note="G3"><strong>3rd string</strong><span>G3 • 196.0 Hz</span></div>
-          <div class="string-card" data-note="B3"><strong>2nd string</strong><span>B3 • 246.9 Hz</span></div>
-          <div class="string-card" data-note="E4"><strong>1st string</strong><span>E4 • 329.6 Hz</span></div>
+          <div class="string-card" data-note="E2"><strong>6. streng</strong><span>E2 • 82.4 Hz</span></div>
+          <div class="string-card" data-note="A2"><strong>5. streng</strong><span>A2 • 110.0 Hz</span></div>
+          <div class="string-card" data-note="D3"><strong>4. streng</strong><span>D3 • 146.8 Hz</span></div>
+          <div class="string-card" data-note="G3"><strong>3. streng</strong><span>G3 • 196.0 Hz</span></div>
+          <div class="string-card" data-note="B3"><strong>2. streng</strong><span>B3 • 246.9 Hz</span></div>
+          <div class="string-card" data-note="E4"><strong>1. streng</strong><span>E4 • 329.6 Hz</span></div>
         </div>
 
       </div>
@@ -229,7 +229,7 @@
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       } catch (err) {
         micLed.className = 'mic-led error';
-        micStatus.textContent = 'Microphone access denied';
+        micStatus.textContent = 'Mikrofontilgang ble nektet';
         active = false;
         return;
       }
@@ -243,8 +243,8 @@
       src.connect(analyser);
 
       micLed.className = 'mic-led active';
-      micStatus.textContent = 'Listening...';
-      btnMic.textContent = '⏹ Stop Guitar Tuner';
+      micStatus.textContent = 'Lytter...';
+      btnMic.textContent = '⏹ Stopp';
       btnMic.classList.replace('btn-primary', 'btn-secondary');
 
       const buf = new Float32Array(analyser.fftSize);
@@ -263,16 +263,16 @@
           const nearestCents = (midiFloat - nearest.midi) * 100;
 
           noteNameEl.textContent = midiToName(midiRounded);
-          noteFreqEl.textContent = `${freq.toFixed(1)} Hz (target ${midiToFreq(midiRounded).toFixed(1)} Hz)`;
+          noteFreqEl.textContent = `${freq.toFixed(1)} Hz (mal ${midiToFreq(midiRounded).toFixed(1)} Hz)`;
 
           if (Math.abs(nearestCents) < 5) {
-            centsEl.textContent = `${nearest.name} ✓ In tune`;
+            centsEl.textContent = `${nearest.name} ✓ I tone`;
             centsEl.className = 'cents-display in-tune';
           } else if (nearestCents > 0) {
-            centsEl.textContent = `${nearest.name} +${nearestCents.toFixed(1)} cents sharp`;
+            centsEl.textContent = `${nearest.name} +${nearestCents.toFixed(1)} cent for hoy`;
             centsEl.className = 'cents-display sharp';
           } else {
-            centsEl.textContent = `${nearest.name} ${nearestCents.toFixed(1)} cents flat`;
+            centsEl.textContent = `${nearest.name} ${nearestCents.toFixed(1)} cent for lav`;
             centsEl.className = 'cents-display flat';
           }
 
@@ -305,8 +305,8 @@
       }
       analyser = null;
       micLed.className = 'mic-led';
-      micStatus.textContent = 'Microphone inactive';
-      btnMic.textContent = '🎤 Start Guitar Tuner';
+      micStatus.textContent = 'Mikrofon inaktiv';
+      btnMic.textContent = '🎤 Start';
       btnMic.classList.replace('btn-secondary', 'btn-primary');
       showSilence();
     }

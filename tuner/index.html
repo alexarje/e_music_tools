@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brass Tuner – e_music_tools</title>
+  <title>Stemming – e_music_tools</title>
   <link rel="stylesheet" href="../style.css" />
   <style>
     .tuner-wrap {
@@ -94,8 +94,8 @@
   <nav class="topnav">
     <a class="brand" href="../index.html">🎵</a>
     <a href="../metronome/">Metronom</a>
-    <a href="../tuner/" class="active">Tuner</a>
-    <a href="../guitar-tuner/">Gitarstemmeapparat</a>
+    <a href="../tuner/" class="active">Stemming</a>
+    <a href="../guitar-tuner/">Gitarstemming</a>
     <a href="../piano/">Piano</a>
     <a href="../drumkit/">Trommesett</a>
   </nav>
@@ -154,10 +154,10 @@
 
         <!-- start / stop -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem">
-          <button class="btn btn-primary" id="btnMic">🎤 Start Tuner</button>
+          <button class="btn btn-primary" id="btnMic">🎤 Start</button>
           <div class="mic-status">
             <div class="mic-led" id="micLed"></div>
-            <span id="micStatus">Microphone inactive</span>
+            <span id="micStatus">Mikrofon inaktiv</span>
           </div>
         </div>
 
@@ -260,7 +260,7 @@
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       } catch (err) {
         micLed.className = 'mic-led error';
-        micStatus.textContent = 'Microphone access denied';
+        micStatus.textContent = 'Mikrofontilgang ble nektet';
         active = false;
         return;
       }
@@ -274,8 +274,8 @@
       src.connect(analyser);
 
       micLed.className = 'mic-led active';
-      micStatus.textContent = 'Listening…';
-      btnMic.textContent = '⏹ Stop Tuner';
+      micStatus.textContent = 'Lytter...';
+      btnMic.textContent = '⏹ Stopp';
       btnMic.classList.replace('btn-primary','btn-secondary');
 
       const buf = new Float32Array(analyser.fftSize);
@@ -293,17 +293,17 @@
           const target = midiToFreq(round);
 
           noteName_el.textContent = noteName(round);
-          noteFreq_el.textContent = `${freq.toFixed(1)} Hz  (target ${target.toFixed(1)} Hz)`;
+          noteFreq_el.textContent = `${freq.toFixed(1)} Hz  (mal ${target.toFixed(1)} Hz)`;
 
           const absCents = Math.abs(cents);
           if (absCents < 5) {
-            centsDisp.textContent = '✓ In tune';
+            centsDisp.textContent = '✓ I tone';
             centsDisp.className = 'cents-display in-tune';
           } else if (cents > 0) {
-            centsDisp.textContent = `+${cents.toFixed(1)} ¢ sharp`;
+            centsDisp.textContent = `+${cents.toFixed(1)} ¢ for hoy`;
             centsDisp.className = 'cents-display sharp';
           } else {
-            centsDisp.textContent = `${cents.toFixed(1)} ¢ flat`;
+            centsDisp.textContent = `${cents.toFixed(1)} ¢ for lav`;
             centsDisp.className = 'cents-display flat';
           }
           setNeedle(cents);
@@ -323,8 +323,8 @@
       if (audioCtx) { audioCtx.close(); audioCtx = null; }
       analyser = null;
       micLed.className = 'mic-led';
-      micStatus.textContent = 'Microphone inactive';
-      btnMic.textContent = '🎤 Start Tuner';
+      micStatus.textContent = 'Mikrofon inaktiv';
+      btnMic.textContent = '🎤 Start ';
       btnMic.classList.replace('btn-secondary','btn-primary');
       showSilence();
     }

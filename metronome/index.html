@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Metronome – e_music_tools</title>
+  <title>Metronom – e_music_tools</title>
   <link rel="stylesheet" href="../style.css" />
   <style>
     .metro-wrap {
@@ -163,8 +163,8 @@
             <button class="btn btn-secondary" id="btnPlus1"   title="+1">+</button>
             <button class="btn btn-secondary" id="btnPlus10"  title="+10">+10</button>
           </div>
-          <button class="btn btn-primary" id="btnStart">▶ Start</button>
-          <button class="btn btn-accent2" id="btnTap">Tap Tempo</button>
+            <button class="btn btn-primary" id="btnStart">▶ Start</button>
+            <button class="btn btn-accent2" id="btnTap">Tapp tempo</button>
         </div>
 
         <!-- slider -->
@@ -175,7 +175,7 @@
 
         <!-- time signature -->
         <div class="ts-wrap">
-          <span>Time signature</span>
+          <span>Taktart</span>
           <select id="tsSelect">
             <option value="2">2/4</option>
             <option value="3">3/4</option>
@@ -184,7 +184,7 @@
           </select>
         </div>
 
-        <div class="tempo-guide" id="tempoGuide" aria-label="Tempo names by BPM range">
+        <div class="tempo-guide" id="tempoGuide" aria-label="Tempobetegnelser etter BPM-omrade">
           <div class="tempo-item" data-min="40" data-max="59"><span class="tempo-name">Largo</span><span>40-59 BPM</span></div>
           <div class="tempo-item" data-min="60" data-max="75"><span class="tempo-name">Adagio</span><span>60-75 BPM</span></div>
           <div class="tempo-item" data-min="76" data-max="107"><span class="tempo-name">Andante</span><span>76-107 BPM</span></div>
@@ -317,7 +317,7 @@
       currentBeat  = 0;
       nextBeatTime = ctx.currentTime + 0.05;
       schedulerTimer = setInterval(scheduler, SCHEDULE_INT);
-      btnStart.textContent = '⏹ Stop';
+      btnStart.textContent = '⏹ Stopp';
       btnStart.classList.replace('btn-primary','btn-secondary');
     }
 
