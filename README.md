@@ -11,6 +11,10 @@ A small collection of in-browser music utilities built with pure HTML, CSS and t
 | 🎹 **Piano** | `piano.html` | Interactive two-octave on-screen keyboard (C4–B5 by default). Supports mouse, touch and computer-keyboard input. Octave shift, four waveforms, volume control. |
 | 🪘 **Drum Kit** | `drumkit.html` | Eight synthesised pads (Kick, Snare, Hi-hat ×2, Tom ×3, Crash) playable by clicking or via keyboard shortcuts `A S D F G H J K`. |
 
+## Live Demo
+
+The site is deployed via GitHub Pages: **https://alexarje.github.io/e_music_tools/**
+
 ## Usage
 
 Open `index.html` in any modern browser, or serve the directory with any static file server:
