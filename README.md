@@ -6,11 +6,11 @@ A small collection of in-browser music utilities built with pure HTML, CSS and t
 
 | App | File | Description |
 |-----|------|-------------|
-| 🥁 **Metronome** | `metronome/index.html` | BPM control (40–240), tap tempo, time-signature selector, visual pendulum & beat flash. Keyboard: `Space` start/stop, `T` tap, `↑/↓` adjust BPM. |
-| 🎺 **Brass Tuner** | `tuner/index.html` | Microphone pitch detector using autocorrelation. Shows note name, frequency, cents deviation and a needle meter. Optimised for the range of brass instruments (tuba → trumpet). |
-| 🎸 **Guitar Tuner** | `guitar-tuner/index.html` | Microphone tuner for standard guitar tuning (E2 A2 D3 G3 B3 E4) with nearest-string highlighting and cents feedback. |
-| 🎹 **Piano** | `piano/index.html` | Interactive two-octave on-screen keyboard (C4–B5 by default). Supports mouse, touch and computer-keyboard input. Octave shift, four waveforms, volume control. |
-| 🪘 **Drum Kit** | `drumkit/index.html` | Eight synthesised pads (Kick, Snare, Hi-hat ×2, Tom ×3, Crash) playable by clicking or via keyboard shortcuts `A S D F G H J K`. |
+| 🥁 **Metronom** | `metronome/index.html` | BPM control (40–240), tap tempo, time-signature selector, beat flash, and a tempo guide (Largo → Prestissimo) that highlights the active range. Keyboard: `Space` start/stop, `T` tap, `↑/↓` adjust BPM. |
+| 🎺 **Stemming** | `tuner/index.html` | Microphone pitch detector using autocorrelation. Shows note name, frequency, cents deviation and a needle meter. Optimised for brass instruments (tuba → trumpet). |
+| 🎸 **Gitarstemming** | `guitar-tuner/index.html` | Microphone tuner for standard guitar tuning (E2 A2 D3 G3 B3 E4) with nearest-string card highlighting and cents sharp/flat feedback. |
+| 🎹 **Piano** | `piano/index.html` | Interactive on-screen keyboard spanning two octaves plus a top C (C4–C6 by default). Supports mouse, touch and computer-keyboard input. Octave shift, four waveforms, volume control. |
+| 🪘 **Trommesett** | `drumkit/index.html` | Eight synthesised pads (Stortromme, Skarptromme, Hi-hat ×2, Tom ×3, Crash) playable by clicking or via keyboard shortcuts `A S D F G H J K`. |
 
 ## Live Demo
 
@@ -29,4 +29,4 @@ python3 -m http.server
 # then open http://localhost:8000
 ```
 
-All audio is generated in-browser using the Web Audio API. The Brass Tuner requires microphone permission.
+All audio is generated in-browser using the Web Audio API. The tuners require microphone permission.
