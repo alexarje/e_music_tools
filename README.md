@@ -18,7 +18,7 @@ The site is deployed via GitHub Pages: **https://alexarje.github.io/e_music_tool
 
 ## Project Story
 
-A Hugo-style blog post with YAML front matter is available at `content/posts/e-music-tools-journey.md`.
+Read [a blog post](https://www.arj.no/2026/03/22/agent-coding-music-tools/) about this project.
 
 ## Usage
 
