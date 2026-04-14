@@ -142,6 +142,12 @@
           <input type="range" id="sensSlider" min="1" max="5" value="3" step="1" />
         </div>
 
+        <!-- frequency slider -->
+        <div class="slider-row">
+          <label><span>🎵 Frekvens</span><span id="freqLabel"></span></label>
+          <input type="range" id="freqSlider" min="200" max="2000" step="1" value="523" />
+        </div>
+
         <!-- volume slider -->
         <div class="slider-row">
           <label><span>🔈 Volum</span><span>🔊</span></label>
@@ -169,15 +175,18 @@
     'use strict';
 
     /* ============================================================
-       Audio context + bell synthesis
-       A bell tone is approximated with additive oscillators using
-       the classic Inharmonic Partial ratios (f, 2.756f, 5.404f, …)
-       each with its own exponential decay.
+       Audio context + bell synthesis (physical model)
+       Inharmonic partials (f, 2.756f, 5.404f, …) are kept as
+       persistent oscillators. On each strike, the current decaying
+       amplitude of each partial is computed and the new impact
+       energy is added on top – just like a real bell that is struck
+       while still ringing.
        ============================================================ */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let volume = 0.8;
+    let fundamental = 523.25; // C5 – controllable via frequency slider
 
-    // Relative frequencies and amplitudes of a typical bell's partials
+    // Inharmonic partial ratios, amplitudes and decay times for a typical bell
     const PARTIALS = [
       { ratio: 1.000, amp: 1.00, decay: 4.0 },
       { ratio: 2.756, amp: 0.50, decay: 2.5 },
@@ -185,27 +194,67 @@
       { ratio: 8.933, amp: 0.12, decay: 1.2 },
       { ratio: 13.35, amp: 0.06, decay: 0.8 },
     ];
-    const FUNDAMENTAL = 523.25; // C5 – bright bell pitch
 
-    function ringBell() {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const t = audioCtx.currentTime;
-      const masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(volume, t);
-      masterGain.connect(audioCtx.destination);
+    // Physical model state: persistent oscillators + per-partial amplitude tracking
+    let masterGainNode = null;
+    let physModel = null; // Array of { osc, gain, trigAmp, trigTime }
 
-      PARTIALS.forEach(({ ratio, amp, decay }) => {
+    function initAudio() {
+      if (physModel) return;
+      masterGainNode = audioCtx.createGain();
+      masterGainNode.gain.value = volume;
+      masterGainNode.connect(audioCtx.destination);
+      physModel = PARTIALS.map(({ ratio }) => {
         const osc  = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.value = FUNDAMENTAL * ratio;
-        gain.gain.setValueAtTime(amp, t);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+        osc.frequency.value = fundamental * ratio;
+        gain.gain.value = 0;
         osc.connect(gain);
-        gain.connect(masterGain);
-        osc.start(t);
-        osc.stop(t + decay + 0.05);
+        gain.connect(masterGainNode);
+        osc.start();
+        return { osc, gain, trigAmp: 0, trigTime: -Infinity };
       });
+    }
+
+    // Returns the amplitude still present in partial i at audioCtx.currentTime
+    // based on how the Web Audio exponential ramp decays:
+    //   value(t) = startAmp * (0.0001 / startAmp) ^ (elapsed / decay)
+    function getResidualAmp(trigAmp, trigTime, decay) {
+      if (trigAmp <= 0) return 0;
+      const elapsed = audioCtx.currentTime - trigTime;
+      if (elapsed <= 0) return trigAmp;
+      if (elapsed >= decay) return 0;
+      return Math.pow(trigAmp, 1 - elapsed / decay) * Math.pow(0.0001, elapsed / decay);
+    }
+
+    function ringBell() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      initAudio();
+      const t = audioCtx.currentTime;
+      masterGainNode.gain.setValueAtTime(volume, t);
+
+      PARTIALS.forEach(({ amp, decay }, i) => {
+        const m = physModel[i];
+        // Add new strike energy on top of whatever amplitude is still ringing
+        const residual = getResidualAmp(m.trigAmp, m.trigTime, decay);
+        // Cap at 2.0 (double the fundamental's amp) to prevent clipping on rapid re-strikes
+        const newAmp = Math.min(2.0, residual + amp);
+        m.trigAmp = newAmp;
+        m.trigTime = t;
+        m.gain.gain.cancelScheduledValues(t);
+        m.gain.gain.setValueAtTime(newAmp, t);
+        m.gain.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+      });
+    }
+
+    // Convert a frequency in Hz to a note name (e.g. 523 → "C5")
+    function freqToNote(freq) {
+      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const noteNum = Math.round(12 * Math.log2(freq / 440) + 69);
+      const octave  = Math.floor(noteNum / 12) - 1;
+      const name    = noteNames[((noteNum % 12) + 12) % 12];
+      return `${name}${octave}`;
     }
 
     /* ============================================================
@@ -292,7 +341,27 @@
     /* ---- Volume slider ---- */
     document.getElementById('volSlider').addEventListener('input', e => {
       volume = e.target.value / 100;
+      if (masterGainNode) {
+        masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+      }
     });
+
+    /* ---- Frequency slider ---- */
+    const freqSlider = document.getElementById('freqSlider');
+    const freqLabel  = document.getElementById('freqLabel');
+
+    freqSlider.addEventListener('input', () => {
+      fundamental = Number(freqSlider.value);
+      freqLabel.textContent = `${freqToNote(fundamental)} · ${fundamental} Hz`;
+      if (physModel) {
+        const t = audioCtx.currentTime;
+        physModel.forEach((m, i) => {
+          m.osc.frequency.setTargetAtTime(fundamental * PARTIALS[i].ratio, t, 0.02);
+        });
+      }
+    });
+    // Init label to match default value
+    freqLabel.textContent = `${freqToNote(fundamental)} · ${Math.round(fundamental)} Hz`;
 
     /* ---- Manual ring button + clicking bell icon ---- */
     document.getElementById('btnRing').addEventListener('click', ring);
