@@ -294,9 +294,12 @@
     const SENSITIVITY_LABELS = ['Veldig lav', 'Lav', 'Middels', 'Høy', 'Veldig høy'];
     let shakeThreshold = SENSITIVITY_LEVELS[2]; // default: medium
 
-    // Cooldown to avoid multiple triggers per shake gesture
-    const COOLDOWN_MS = 700;
+    // Rising-edge detection: fire once each time acceleration crosses
+    // the threshold from below.  A short debounce guards against re-firing
+    // if the magnitude bounces near the threshold within the same gesture.
+    const DEBOUNCE_MS = 80;
     let lastRingTime  = 0;
+    let prevMagnitude = 0;
 
     // Bar display
     const shakeBar = document.getElementById('shakeBar');
@@ -319,11 +322,16 @@
       shakeBar.classList.toggle('over', magnitude >= shakeThreshold);
       shakeVal.textContent = Math.round(magnitude);
 
+      // Trigger on the rising edge of the threshold crossing so that each
+      // distinct shake fires once – even rapid successive shakes while the
+      // bell is already ringing (the physical model accumulates energy).
       const now = Date.now();
-      if (magnitude >= shakeThreshold && (now - lastRingTime) > COOLDOWN_MS) {
+      if (magnitude >= shakeThreshold && prevMagnitude < shakeThreshold &&
+          (now - lastRingTime) > DEBOUNCE_MS) {
         lastRingTime = now;
         ring();
       }
+      prevMagnitude = magnitude;
     }
 
     /* ---- Sensitivity slider ---- */
