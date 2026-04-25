@@ -28,6 +28,7 @@ function rmsToDb(rms) {
 }
 
 
+function updateLoudness() {
     let db = -60;
     if (aWeightingFilter && analyser.getFloatTimeDomainData) {
         // Use filtered output for dBA
