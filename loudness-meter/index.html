@@ -52,14 +52,29 @@
             <div class="loudness-level" id="loudness-level"></div>
         </div>
         <div class="scale-labels">
-            <span>-60 dB</span>
-            <span>-30 dB</span>
-            <span>0 dB</span>
+                <span>30 dBA</span>
+                <span>60 dBA</span>
+                <span>90 dBA</span>
+                <span>120 dBA</span>
         </div>
-        <p style="margin-top:2em; font-size:0.9em; color:#bbb;">
-            This tool measures loudness (RMS) from your microphone and reports the value in decibels (dBFS).<br>
-            0 dBFS is the maximum possible digital level.
-        </p>
+            <p style="margin-top:2em; font-size:0.95em; color:#bbb;">
+                <b>About dBA:</b> The dBA scale is a weighted decibel scale that approximates human hearing sensitivity. It is commonly used for environmental and occupational noise measurements.<br>
+                <br>
+                <b>Common dBA Levels and Effects:</b>
+            </p>
+            <table style="width:100%; font-size:0.95em; color:#fff; background:#333; border-radius:8px; margin-bottom:1em;">
+                <tr><th style="text-align:left; padding:4px;">dBA Level</th><th style="text-align:left; padding:4px;">Example / Effect</th><th style="text-align:left; padding:4px;">Harmfulness</th></tr>
+                <tr><td style="padding:4px;">30 dBA</td><td style="padding:4px;">Whisper, quiet library</td><td style="padding:4px;">Safe</td></tr>
+                <tr><td style="padding:4px;">50 dBA</td><td style="padding:4px;">Normal conversation</td><td style="padding:4px;">Safe</td></tr>
+                <tr><td style="padding:4px;">70 dBA</td><td style="padding:4px;">Busy traffic, vacuum cleaner</td><td style="padding:4px;">Safe for short exposure</td></tr>
+                <tr><td style="padding:4px;">85 dBA</td><td style="padding:4px;">City traffic, hair dryer</td><td style="padding:4px;">Hearing damage after prolonged exposure</td></tr>
+                <tr><td style="padding:4px;">100 dBA</td><td style="padding:4px;">Chainsaw, nightclub</td><td style="padding:4px;">Dangerous after 15 min</td></tr>
+                <tr><td style="padding:4px;">120 dBA</td><td style="padding:4px;">Rock concert, thunderclap</td><td style="padding:4px;">Immediate harm, pain threshold</td></tr>
+                <tr><td style="padding:4px;">140 dBA</td><td style="padding:4px;">Jet engine at takeoff</td><td style="padding:4px;">Pain, possible permanent damage</td></tr>
+            </table>
+            <p style="font-size:0.9em; color:#bbb;">
+                <b>Note:</b> This tool currently measures digital loudness (dBFS), not true dBA SPL. For accurate dBA measurements, a calibrated sound level meter is required.
+            </p>
     </div>
     <script src="loudness.js"></script>
 </body>
