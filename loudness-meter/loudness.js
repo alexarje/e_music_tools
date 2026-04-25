@@ -10,10 +10,13 @@ let source;
 let animationId;
 let aWeightingFilter;
 
-function calculateRMS(buffer) {
+function calculateRMS(buffer, isFloat = false) {
     let sum = 0;
     for (let i = 0; i < buffer.length; i++) {
-        const val = buffer[i] / 128 - 1;
+        let val = buffer[i];
+        if (!isFloat) {
+            val = buffer[i] / 128 - 1;
+        }
         sum += val * val;
     }
     return Math.sqrt(sum / buffer.length);
@@ -25,31 +28,21 @@ function rmsToDb(rms) {
 }
 
 
-function updateLoudness() {
-    analyser.getByteTimeDomainData(dataArray);
-    const rms = calculateRMS(dataArray);
-    let db = rmsToDb(rms);
-
-    // If A-weighting filter is present, use filtered output for dBA
-    if (aWeightingFilter) {
-        // Create a buffer to read filtered data
+    let db = -60;
+    if (aWeightingFilter && analyser.getFloatTimeDomainData) {
+        // Use filtered output for dBA
         const filteredBuffer = new Float32Array(analyser.fftSize);
-        // Use getFloatTimeDomainData if available for higher precision
-        if (analyser.getFloatTimeDomainData) {
-            analyser.getFloatTimeDomainData(filteredBuffer);
-        } else {
-            // Fallback: convert Uint8 to Float32
-            for (let i = 0; i < dataArray.length; i++) {
-                filteredBuffer[i] = dataArray[i] / 128 - 1;
-            }
-        }
-        const filteredRMS = calculateRMS(filteredBuffer);
+        analyser.getFloatTimeDomainData(filteredBuffer);
+        const filteredRMS = calculateRMS(filteredBuffer, true);
         db = rmsToDb(filteredRMS);
+    } else {
+        analyser.getByteTimeDomainData(dataArray);
+        const rms = calculateRMS(dataArray);
+        db = rmsToDb(rms);
     }
-
     if (!isFinite(db)) db = -60;
     db = Math.max(-60, Math.min(0, db));
-    dbValue.textContent = db.toFixed(1) + ' dBA';
+    dbValue.textContent = db.toFixed(1) + ' dBA (approx)';
     // Map -60..0 dB to 0..100%
     const percent = ((db + 60) / 60) * 100;
     loudnessLevel.style.width = percent + '%';
