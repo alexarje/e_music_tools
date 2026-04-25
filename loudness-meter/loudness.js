@@ -10,6 +10,7 @@ let animationId;
 let aWeightingFilter;
 let lastDb = 0;
 let lastUpdate = 0;
+const SMOOTHING_WINDOW = 0.5; // seconds
 
 function calculateRMS(buffer, isFloat = false) {
     let sum = 0;
@@ -29,7 +30,6 @@ function rmsToDb(rms) {
 }
 
 
-function updateLoudness() {
     let db = 0;
     if (aWeightingFilter && analyser.getFloatTimeDomainData) {
         // Use filtered output for dBA
@@ -45,8 +45,11 @@ function updateLoudness() {
     if (!isFinite(db) || db < 0) db = 0;
     db = Math.min(120, db); // Cap at 120 dBA
 
-    // Smoothing (exponential moving average)
-    lastDb = lastDb * 0.7 + db * 0.3;
+    // Smoothing (exponential moving average over ~0.5s)
+    // If updateLoudness runs at ~60Hz, alpha = 1 - exp(-dt/window)
+    // For 0.5s window and 60Hz, alpha ≈ 0.033
+    const alpha = 0.033;
+    lastDb = lastDb * (1 - alpha) + db * alpha;
 
     // Update only every ~150ms
     const now = performance.now();
