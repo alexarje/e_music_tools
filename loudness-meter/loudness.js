@@ -8,9 +8,10 @@ let dataArray;
 let source;
 let animationId;
 let aWeightingFilter;
-let lastDb = 0;
+let lastDb = null;
 let lastUpdate = 0;
 const SMOOTHING_WINDOW = 0.5; // seconds
+const REPORT_INTERVAL = 500; // ms
 
 function calculateRMS(buffer, isFloat = false) {
     let sum = 0;
@@ -96,8 +97,40 @@ startBtn.onclick = async () => {
             aWeightingFilter = null;
         }
         startBtn.textContent = 'Stop Measurement';
-        updateLoudness();
-    } catch (err) {
-        alert('Microphone access denied or unavailable.');
-    }
-};
+        function updateLoudness() {
+            let db = null;
+            if (aWeightingFilter && analyser.getFloatTimeDomainData) {
+                // Use filtered output for dBA
+                const filteredBuffer = new Float32Array(analyser.fftSize);
+                analyser.getFloatTimeDomainData(filteredBuffer);
+                const filteredRMS = calculateRMS(filteredBuffer, true);
+                db = rmsToDb(filteredRMS) + 60; // shift scale to 0..60+ dBA
+            } else {
+                analyser.getByteTimeDomainData(dataArray);
+                const rms = calculateRMS(dataArray);
+                db = rmsToDb(rms) + 60;
+            }
+            if (!isFinite(db) || db < 0) db = 0;
+            db = Math.min(120, db); // Cap at 120 dBA
+
+            // Smoothing (exponential moving average over ~0.5s)
+            // Only update lastDb if it's the first value, otherwise smooth
+            if (lastDb === null) {
+                lastDb = db;
+            } else {
+                // alpha for 0.5s window, update every 0.5s
+                const alpha = 0.2;
+                lastDb = lastDb * (1 - alpha) + db * alpha;
+            }
+
+            // Update only every 0.5s
+            const now = performance.now();
+            if (!lastUpdate || now - lastUpdate > REPORT_INTERVAL) {
+                dbValue.textContent = lastDb.toFixed(1) + ' dBA (approx)';
+                // Map 0..120 dBA to 0..100%
+                const percent = (lastDb / 120) * 100;
+                loudnessLevel.style.width = percent + '%';
+                lastUpdate = now;
+            }
+            animationId = requestAnimationFrame(updateLoudness);
+        }
