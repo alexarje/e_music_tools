@@ -1,3 +1,6 @@
+// Calibration offset to approximate real-world dBA SPL
+// Adjust this value for your microphone/system
+const CALIBRATION_OFFSET = 90;
 const startBtn = document.getElementById('start-btn');
 const dbValue = document.getElementById('db-value');
 const loudnessLevel = document.getElementById('loudness-level');
@@ -29,16 +32,17 @@ function rmsToDb(rms) {
 }
 
 function updateLoudness() {
+
     let db = 0;
     if (aWeightingFilter && analyser.getFloatTimeDomainData) {
         const filteredBuffer = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(filteredBuffer);
         const filteredRMS = calculateRMS(filteredBuffer, true);
-        db = rmsToDb(filteredRMS) + 60;
+        db = rmsToDb(filteredRMS) + CALIBRATION_OFFSET;
     } else {
         analyser.getByteTimeDomainData(dataArray);
         const rms = calculateRMS(dataArray);
-        db = rmsToDb(rms) + 60;
+        db = rmsToDb(rms) + CALIBRATION_OFFSET;
     }
     if (!isFinite(db) || db < 0) db = 0;
     db = Math.min(120, db);
