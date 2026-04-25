@@ -3,12 +3,13 @@ const dbValue = document.getElementById('db-value');
 const loudnessLevel = document.getElementById('loudness-level');
 
 let audioContext;
-
 let analyser;
 let dataArray;
 let source;
 let animationId;
 let aWeightingFilter;
+let lastDb = 0;
+let lastUpdate = 0;
 
 function calculateRMS(buffer, isFloat = false) {
     let sum = 0;
@@ -29,24 +30,33 @@ function rmsToDb(rms) {
 
 
 function updateLoudness() {
-    let db = -60;
+    let db = 0;
     if (aWeightingFilter && analyser.getFloatTimeDomainData) {
         // Use filtered output for dBA
         const filteredBuffer = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(filteredBuffer);
         const filteredRMS = calculateRMS(filteredBuffer, true);
-        db = rmsToDb(filteredRMS);
+        db = rmsToDb(filteredRMS) + 60; // shift scale to 0..60+ dBA
     } else {
         analyser.getByteTimeDomainData(dataArray);
         const rms = calculateRMS(dataArray);
-        db = rmsToDb(rms);
+        db = rmsToDb(rms) + 60;
     }
-    if (!isFinite(db)) db = -60;
-    db = Math.max(-60, Math.min(0, db));
-    dbValue.textContent = db.toFixed(1) + ' dBA (approx)';
-    // Map -60..0 dB to 0..100%
-    const percent = ((db + 60) / 60) * 100;
-    loudnessLevel.style.width = percent + '%';
+    if (!isFinite(db) || db < 0) db = 0;
+    db = Math.min(120, db); // Cap at 120 dBA
+
+    // Smoothing (exponential moving average)
+    lastDb = lastDb * 0.7 + db * 0.3;
+
+    // Update only every ~150ms
+    const now = performance.now();
+    if (!lastUpdate || now - lastUpdate > 150) {
+        dbValue.textContent = lastDb.toFixed(1) + ' dBA (approx)';
+        // Map 0..120 dBA to 0..100%
+        const percent = (lastDb / 120) * 100;
+        loudnessLevel.style.width = percent + '%';
+        lastUpdate = now;
+    }
     animationId = requestAnimationFrame(updateLoudness);
 }
 
