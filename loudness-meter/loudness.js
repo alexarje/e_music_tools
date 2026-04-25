@@ -69,16 +69,19 @@ startBtn.onclick = async () => {
         dataArray = new Uint8Array(analyser.fftSize);
         source = audioContext.createMediaStreamSource(stream);
 
-        // Create an IIRFilterNode for A-weighting
-        // Coefficients from IEC 61672:1 for 48kHz sample rate
-        // Source: https://github.com/endolith/waveform_analysis/blob/master/A_weighting/weighting_filters.py
-        aWeightingFilter = audioContext.createIIRFilter(
-            [0.255741125204258, -0.511482250408516, 0.255741125204258],
-            [1.0, -0.647481794910190, 0.142873374441515]
-        );
-        source.connect(aWeightingFilter);
-        aWeightingFilter.connect(analyser);
-
+        // Try to create an A-weighting filter, but always connect analyser
+        try {
+            aWeightingFilter = audioContext.createIIRFilter(
+                [0.255741125204258, -0.511482250408516, 0.255741125204258],
+                [1.0, -0.647481794910190, 0.142873374441515]
+            );
+            source.connect(aWeightingFilter);
+            aWeightingFilter.connect(analyser);
+        } catch (e) {
+            // Fallback: connect source directly to analyser if filter fails
+            source.connect(analyser);
+            aWeightingFilter = null;
+        }
         startBtn.textContent = 'Stop Measurement';
         updateLoudness();
     } catch (err) {
